@@ -12,12 +12,11 @@
 </head>
 <body>
 <div class="wrap">
-<header class="hero"><div><div class="eyebrow">Librarian</div><h1>Your private reading catalogue</h1><p>Add book info manually or auto-fetch details. Then click Save to GitHub.</p></div><div class="actions"><button id="connectBtn">Connect GitHub</button><button id="saveGitBtn" class="safe">Save to GitHub</button><button id="autoFetchBtn" class="purple">⚡ Auto-Fetch Goodreads</button><button id="saveFileBtn">Save file</button><button id="loadFileBtn">Load file</button></div></header>
+<header class="hero"><div><div class="eyebrow">Librarian</div><h1>Your private reading catalogue</h1><p>Add book info manually or fetch details automatically. Then click Save to GitHub.</p></div><div class="actions"><button id="batchFetchBtn" class="purple">⚡ Batch Fetch New Books</button><button id="connectBtn">Connect GitHub</button><button id="saveGitBtn" class="safe">Save to GitHub</button><button id="saveFileBtn">Save file</button><button id="loadFileBtn">Load file</button></div></header>
 <section class="stats"><div class="stat"><b id="stTotal">0</b><span>Total</span></div><div class="stat"><b id="stUnread">0</b><span>Unread</span></div><div class="stat"><b id="stFilled">0</b><span>Goodreads filled</span></div><div class="stat"><b id="stNeeds">0</b><span>Need Goodreads</span></div><div class="stat"><b id="stSignals">0</b><span>Liked/Favorites</span></div></section>
-<main class="layout"><section><div class="search"><span>Search</span><input id="searchBox" placeholder="Title, author, series, Goodreads keywords..." /></div><div class="chips" id="chips"></div><div id="grid" class="grid"></div><div id="empty" class="empty hidden">No books match this view.</div></section><aside><div class="panel warning"><h2>Steps</h2><p>1. Connect GitHub.
-2. Click ⚡ Auto-Fetch Goodreads to enrich books.
-3. Review ratings & genres in Details.
-4. Click Save to GitHub.</p><div id="githubStatus" class="notice">GitHub status will show here.</div></div><div class="panel"><h2>Librarian</h2><p>Recommends from your catalogue only.</p><input id="moodBox" placeholder="Mood or keyword, e.g. high rating, fantasy" /><button id="recommendBtn" class="primary" style="width:100%;justify-content:center;margin-top:8px">Recommend from my library</button><div id="rec" class="notice hidden"></div></div></aside></main>
+<main class="layout"><section><div class="search"><span>Search</span><input id="searchBox" placeholder="Title, author, series, Goodreads keywords..." /></div><div class="chips" id="chips"></div><div id="grid" class="grid"></div><div id="empty" class="empty hidden">No books match this view.</div></section><aside><div class="panel warning"><h2>Steps</h2><p>1. Click <b>Batch Fetch</b> to automatically enrich new books.
+2. Connect GitHub.
+3. Click Save to GitHub.</p><div id="githubStatus" class="notice">GitHub status will show here.</div></div><div class="panel"><h2>Librarian</h2><p>Recommends from your catalogue only.</p><input id="moodBox" placeholder="Mood or keyword, e.g. high rating, fantasy" /><button id="recommendBtn" class="primary" style="width:100%;justify-content:center;margin-top:8px">Recommend from my library</button><div id="rec" class="notice hidden"></div></div></aside></main>
 </div>
 <input type="file" id="fileInput" accept=".json,.js" class="hidden" />
 <div id="modalRoot"></div>
@@ -36,7 +35,94 @@ function hasCsvDetails(b){return b.csvStatus==='loaded' || !!(b.author || b.seri
 function ratingText(b){return b.goodreadsRating ? 'Rating '+b.goodreadsRating : 'No rating'}
 function match(b){const hay=[b.title,b.author,b.series,(b.tags||[]).join(' '),(b.goodreadsKeywords||[]).join(' '),b.notes,b.goodreadsUrl].join(' ').toLowerCase();const mq=!query||hay.includes(query.toLowerCase());const mf=filter==='All'||(filter==='Unread'&&b.status==='unread')||(filter==='Reading'&&b.status==='reading')||(filter==='Finished'&&b.status==='finished')||(filter==='Liked'&&b.liked)||(filter==='Favorites'&&b.favorite)||(filter==='Goodreads filled'&&grFilled(b))||(filter==='Needs Goodreads'&&grNeeds(b))||(filter==='High confidence'&&b.matchConfidence==='high')||(filter==='Low confidence'&&b.matchConfidence==='low');return mq&&mf}
 function render(){stTotal.textContent=books.length;stUnread.textContent=books.filter(b=>b.status==='unread').length;stFilled.textContent=books.filter(grFilled).length;stNeeds.textContent=books.filter(grNeeds).length;stSignals.textContent=books.filter(b=>b.liked||b.favorite).length;chips.innerHTML='';filters.forEach(f=>{const c=document.createElement('button');c.className='chip '+(filter===f?'active':'');c.textContent=f;c.onclick=()=>{filter=f;render()};chips.appendChild(c)});grid.innerHTML='';const list=books.filter(match);empty.classList.toggle('hidden',list.length>0);list.forEach(b=>{const el=document.createElement('article');el.className='card';el.innerHTML=`<div class="badges"><span class="badge good">In catalog</span><span class="badge ${hasCsvDetails(b)?'good':'warn'}">${hasCsvDetails(b)?'CSV details':'Minimal row'}</span><span class="badge ${grFilled(b)?'gold':'warn'}">${grFilled(b)?ratingText(b):'Needs Goodreads'}</span><span class="badge blue">${b.status}</span></div><h3>${esc(b.title)}</h3><p class="author">${esc(b.author||'Author unknown')}</p><p class="blurb">${esc((b.goodreadsKeywords||[]).length?('Keywords: '+b.goodreadsKeywords.slice(0,5).join(', ')):(b.series?('Series: '+b.series):'Click Details to add info.'))}</p><div class="tags">${(b.tags||[]).slice(0,3).map(t=>`<span>${esc(t)}</span>`).join('')}${(b.goodreadsKeywords||[]).slice(0,3).map(t=>`<span>${esc(t)}</span>`).join('')}</div><div class="cardactions"><button data-details>Details</button><button data-like class="${b.liked?'on':''}">${b.liked?'♥ Liked':'♡ Like'}</button><button data-fav class="${b.favorite?'on':''}">${b.favorite?'★ Favorite':'☆ Favorite'}</button><select data-status><option value="unread">Unread</option><option value="reading">Reading</option><option value="finished">Finished</option></select></div>`;el.querySelector('[data-status]').value=b.status;el.querySelector('[data-details]').onclick=e=>{e.stopPropagation();openBook(b.id)};el.querySelector('[data-like]').onclick=e=>{e.stopPropagation();b.liked=!b.liked;render()};el.querySelector('[data-fav]').onclick=e=>{e.stopPropagation();b.favorite=!b.favorite;render()};el.querySelector('[data-status]').onchange=e=>{e.stopPropagation();b.status=e.target.value;render()};el.onclick=()=>openBook(b.id);grid.appendChild(el)})}
-function openBook(id){const b=books.find(x=>x.id===id);if(!b)return;modalRoot.innerHTML=`<div class="modalbg"><div class="modal"><button class="close" id="mbClose">×</button><div class="badges"><span class="badge good">In catalog</span><span class="badge ${grFilled(b)?'gold':'warn'}">${grFilled(b)?'Goodreads filled':'Needs Goodreads'}</span></div><h2>${esc(b.title)}</h2><p class="author">${esc(b.author||'Author unknown')}</p><div class="detailgrid"><div class="detailbox"><b>CSV tags</b>${esc((b.tags||[]).join(', ')||'None')}</div><div class="detailbox"><b>Series</b>${esc(b.series||'None')}</div></div><h3>Reading status</h3><label>Status</label><select id="mStatus"><option value="unread">Unread</option><option value="reading">Reading</option><option value="finished">Finished</option></select><div class="fieldrow"><div><label>Author</label><input id="mAuthor" value="${esc(b.author||'')}"></div><div><label>Series</label><input id="mSeries" value="${esc(b.series||'')}"></div></div><label>CSV/library tags, comma separated</label><input id="mTags" value="${esc((b.tags||[]).join(', '))}"><h3>Goodreads / Book Info</h3><div class="fieldrow"><div><label>Rating</label><input id="mGrRating" placeholder="4.12" value="${esc(b.goodreadsRating==null?'':String(b.goodreadsRating))}"></div><div><label>Number of ratings/reviews</label><input id="mGrCount" placeholder="18,234 ratings" value="${esc(b.goodreadsRatingsCount||'')}"></div></div><label>URL</label><input id="mGrUrl" placeholder="https://..." value="${esc(b.goodreadsUrl||'')}"><label>Keywords / Genres, comma separated</label><input id="mGrKeywords" placeholder="historical romance, regency, slow burn" value="${esc((b.goodreadsKeywords||[]).join(', '))}"><div class="fieldrow"><div><label>Match confidence</label><select id="mConfidence"><option value="not_enriched">Not enriched</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select></div><div><label>Goodreads status</label><select id="mGrStatus"><option value="needs_goodreads">Needs Goodreads</option><option value="filled">Filled</option><option value="manual_match">Manual match</option></select></div></div><h3>Notes</h3><textarea id="mNotes" rows="5">${esc(b.notes||'')}</textarea><button id="mSave" class="primary">Apply change</button></div></div>`;mStatus.value=b.status;mConfidence.value=b.matchConfidence||'not_enriched';mGrStatus.value=grFilled(b)?(b.goodreadsStatus||'filled'):(b.goodreadsStatus||'needs_goodreads');mbClose.onclick=()=>modalRoot.innerHTML='';modalRoot.querySelector('.modalbg').onclick=e=>{if(e.target.className==='modalbg')modalRoot.innerHTML=''};mSave.onclick=()=>{b.status=mStatus.value;b.author=mAuthor.value.trim();b.series=mSeries.value.trim();b.tags=mTags.value.split(',').map(x=>x.trim()).filter(Boolean);b.goodreadsRating=mGrRating.value.trim()?Number(mGrRating.value.trim()):null;b.goodreadsRatingsCount=mGrCount.value.trim();b.goodreadsUrl=mGrUrl.value.trim();b.goodreadsKeywords=mGrKeywords.value.split(',').map(x=>x.trim()).filter(Boolean);b.matchConfidence=mConfidence.value;b.goodreadsStatus=(b.goodreadsRating||b.goodreadsUrl||b.goodreadsKeywords.length)?(mGrStatus.value==='needs_goodreads'?'filled':mGrStatus.value):mGrStatus.value;b.notes=mNotes.value.trim();b.csvStatus=hasCsvDetails(b)?'loaded':'minimal';modalRoot.innerHTML='';render()}}
+
+// Helper to pause execution between requests
+const sleep = (ms) => new Promise(res => setTimeout(res, ms));
+
+async function fetchSingleBook(query) {
+  try {
+    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.items || !data.items.length) return null;
+    const info = data.items[0].volumeInfo;
+    return {
+      rating: info.averageRating || null,
+      url: info.infoLink || null,
+      genres: info.categories || [],
+      blurb: info.description ? info.description.slice(0, 300) + '...' : null
+    };
+  } catch (err) {
+    return null;
+  }
+}
+
+// Controlled batch fetcher with a delay to prevent rate limits
+async function batchFetchUnenriched() {
+  const targets = books.filter(b => grNeeds(b));
+  if (!targets.length) {
+    setStatus('All books are already enriched!', true, false);
+    return;
+  }
+
+  batchFetchBtn.disabled = true;
+  let count = 0;
+
+  for (let b of targets) {
+    count++;
+    batchFetchBtn.textContent = `Fetching ${count}/${targets.length}...`;
+    setStatus(`Processing (${count}/${targets.length}): "${b.title}"...`);
+
+    const q = `${b.author || ''} ${b.title}`.trim();
+    const info = await fetchSingleBook(q);
+
+    if (info) {
+      if (info.rating) b.goodreadsRating = info.rating;
+      if (info.url) b.goodreadsUrl = info.url;
+      if (info.genres && info.genres.length) b.goodreadsKeywords = info.genres;
+      if (info.blurb && !b.notes) b.notes = 'Blurb: ' + info.blurb;
+      b.matchConfidence = 'high';
+      b.goodreadsStatus = 'filled';
+    }
+
+    render(); // Update UI live as each book is found
+    await sleep(500); // 500ms delay protects against rate-limiting
+  }
+
+  batchFetchBtn.disabled = false;
+  batchFetchBtn.textContent = '⚡ Batch Fetch New Books';
+  setStatus(`Finished! Enriched ${targets.length} books. Click "Save to GitHub" when ready.`, true, false);
+}
+
+function openBook(id){
+  const b=books.find(x=>x.id===id);
+  if(!b)return;
+  modalRoot.innerHTML=`<div class="modalbg"><div class="modal"><button class="close" id="mbClose">×</button><div class="badges"><span class="badge good">In catalog</span><span class="badge ${grFilled(b)?'gold':'warn'}">${grFilled(b)?'Goodreads filled':'Needs Goodreads'}</span></div><h2>${esc(b.title)}</h2><p class="author">${esc(b.author||'Author unknown')}</p><div class="detailgrid"><div class="detailbox"><b>CSV tags</b>${esc((b.tags||[]).join(', ')||'None')}</div><div class="detailbox"><b>Series</b>${esc(b.series||'None')}</div></div><h3>Reading status</h3><label>Status</label><select id="mStatus"><option value="unread">Unread</option><option value="reading">Reading</option><option value="finished">Finished</option></select><div class="fieldrow"><div><label>Author</label><input id="mAuthor" value="${esc(b.author||'')}"></div><div><label>Series</label><input id="mSeries" value="${esc(b.series||'')}"></div></div><label>CSV/library tags, comma separated</label><input id="mTags" value="${esc((b.tags||[]).join(', '))}"><h3>Goodreads / Book Info</h3><div class="fieldrow"><div><label>Rating</label><input id="mGrRating" placeholder="4.12" value="${esc(b.goodreadsRating==null?'':String(b.goodreadsRating))}"></div><div><label>Number of ratings/reviews</label><input id="mGrCount" placeholder="18,234 ratings" value="${esc(b.goodreadsRatingsCount||'')}"></div></div><label>URL</label><input id="mGrUrl" placeholder="https://..." value="${esc(b.goodreadsUrl||'')}"><label>Keywords / Genres, comma separated</label><input id="mGrKeywords" placeholder="historical romance, regency, slow burn" value="${esc((b.goodreadsKeywords||[]).join(', '))}"><div class="fieldrow"><div><label>Match confidence</label><select id="mConfidence"><option value="not_enriched">Not enriched</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select></div><div><label>Goodreads status</label><select id="mGrStatus"><option value="needs_goodreads">Needs Goodreads</option><option value="filled">Filled</option><option value="manual_match">Manual match</option></select></div></div><h3>Notes</h3><textarea id="mNotes" rows="5">${esc(b.notes||'')}</textarea><button id="mSave" class="primary">Apply change</button></div></div>`;
+  
+  mStatus.value=b.status;
+  mConfidence.value=b.matchConfidence||'not_enriched';
+  mGrStatus.value=grFilled(b)?(b.goodreadsStatus||'filled'):(b.goodreadsStatus||'needs_goodreads');
+  mbClose.onclick=()=>modalRoot.innerHTML='';
+  modalRoot.querySelector('.modalbg').onclick=e=>{if(e.target.className==='modalbg')modalRoot.innerHTML=''};
+
+  mSave.onclick=()=>{
+    b.status=mStatus.value;
+    b.author=mAuthor.value.trim();
+    b.series=mSeries.value.trim();
+    b.tags=mTags.value.split(',').map(x=>x.trim()).filter(Boolean);
+    b.goodreadsRating=mGrRating.value.trim()?Number(mGrRating.value.trim()):null;
+    b.goodreadsRatingsCount=mGrCount.value.trim();
+    b.goodreadsUrl=mGrUrl.value.trim();
+    b.goodreadsKeywords=mGrKeywords.value.split(',').map(x=>x.trim()).filter(Boolean);
+    b.matchConfidence=mConfidence.value;
+    b.goodreadsStatus=(b.goodreadsRating||b.goodreadsUrl||b.goodreadsKeywords.length)?(mGrStatus.value==='needs_goodreads'?'filled':mGrStatus.value):mGrStatus.value;
+    b.notes=mNotes.value.trim();
+    b.csvStatus=hasCsvDetails(b)?'loaded':'minimal';
+    modalRoot.innerHTML='';
+    render();
+  };
+}
+
 function booksJs(){return 'window.LIBRARIEN_BOOKS = '+JSON.stringify(books,null,2)+';\n'}
 function downloadBooksJs(){const blob=new Blob([booksJs()],{type:'application/javascript'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='books.js';a.click();URL.revokeObjectURL(a.href)}
 function unicodeB64(str){return btoa(unescape(encodeURIComponent(str)))}
@@ -46,76 +132,8 @@ async function connectGitHub(){if(!gh.clientId||!gh.owner||!gh.repo){setStatus('
 async function handleOAuthCallback(){const params=new URLSearchParams(location.search);const code=params.get('code');if(!code)return;history.replaceState({},document.title,location.pathname);try{let saved={};try{saved=JSON.parse(window.name||'{}')}catch(e){}let verifier=saved.verifier;if(!verifier&&params.get('state')){try{verifier=JSON.parse(atob(params.get('state'))).verifier}catch(e){}}if(!verifier)throw new Error('Missing OAuth verifier. Try Connect GitHub again.');setStatus('GitHub approved. Asking backend to finish sign-in...');const res=await fetch('/api/github-token',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({client_id:gh.clientId,code,redirect_uri:location.origin+location.pathname,code_verifier:verifier})});const data=await res.json();if(!res.ok||!data.access_token)throw new Error(data.error_description||data.error||'No access token returned.');accessToken=data.access_token;setStatus('Connected to GitHub. You can now click Save to GitHub.',true,false)}catch(err){setStatus('GitHub connection failed: '+err.message+'\nUse Save file as the fallback.',false,true)}}
 async function saveToGitHub(){if(!accessToken){setStatus('Not connected. Click Connect GitHub first.');return}try{setStatus('Finding current books.js in GitHub...');const api=`https://api.github.com/repos/${encodeURIComponent(gh.owner)}/${encodeURIComponent(gh.repo)}/contents/${encodeURIComponent(gh.path)}?ref=${encodeURIComponent(gh.branch||'main')}`;const getRes=await fetch(api,{headers:{'Authorization':'Bearer '+accessToken,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'}});if(!getRes.ok)throw new Error('Could not read existing file: '+getRes.status+' '+await getRes.text());const current=await getRes.json();setStatus('Saving updated books.js to GitHub...');const putRes=await fetch(api,{method:'PUT',headers:{'Authorization':'Bearer '+accessToken,'Accept':'application/vnd.github+json','Content-Type':'application/json','X-GitHub-Api-Version':'2022-11-28'},body:JSON.stringify({message:'Update Librarian catalogue',content:unicodeB64(booksJs()),sha:current.sha,branch:gh.branch||'main'})});if(!putRes.ok)throw new Error('Could not save file: '+putRes.status+' '+await putRes.text());setStatus('Saved to GitHub. Vercel may take a minute to refresh.',true,false)}catch(err){setStatus('Save to GitHub failed: '+err.message+'\nUse Save file as the fallback.',false,true)}}
 
-// Direct client-side fetcher using Google Books API
-async function fetchGoodreadsData(query) {
-  try {
-    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}`);
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (!data.items || !data.items.length) return null;
-
-    const info = data.items[0].volumeInfo;
-    return {
-      rating: info.averageRating || null,
-      url: info.infoLink || null,
-      genres: info.categories || [],
-      blurb: info.description ? info.description.slice(0, 300) + '...' : null
-    };
-  } catch (err) {
-    console.error('Fetch error:', err);
-    return null;
-  }
-}
-
-async function handleAutoFetchGoodreads(){
-  const btn = document.getElementById('autoFetchBtn');
-  const targetBooks = books.filter(b => grNeeds(b));
-  
-  if (targetBooks.length === 0) {
-    setStatus('All books already have data!', true, false);
-    return;
-  }
-  
-  btn.disabled = true;
-  btn.textContent = '⚡ Fetching...';
-  setStatus(`Starting auto-fetch for ${targetBooks.length} book(s)...`);
-  
-  let successCount = 0;
-  let processedCount = 0;
-  
-  for (let i = 0; i < books.length; i++) {
-    const b = books[i];
-    if (grNeeds(b)) {
-      processedCount++;
-      const q = `${b.title} ${b.author && b.author !== 'Author unknown' ? b.author : ''}`.trim();
-      setStatus(`Fetching (${processedCount}/${targetBooks.length}): "${b.title}"...`);
-      
-      try {
-        const data = await fetchGoodreadsData(q);
-        if (data) {
-          if (data.rating) b.goodreadsRating = Number(data.rating);
-          if (data.url) b.goodreadsUrl = data.url;
-          if (data.genres && data.genres.length) b.goodreadsKeywords = data.genres;
-          if (data.blurb) b.notes = (b.notes ? b.notes + '\n\n' : '') + 'Blurb: ' + data.blurb;
-          b.goodreadsStatus = 'filled';
-          successCount++;
-          render();
-        }
-      } catch (err) {
-        console.error(`Failed to fetch for ${b.title}:`, err);
-      }
-      
-      await new Promise(r => setTimeout(r, 150));
-    }
-  }
-  
-  btn.disabled = false;
-  btn.textContent = '⚡ Auto-Fetch Goodreads';
-  setStatus(`Auto-fetch complete! Updated ${successCount} book(s). Click Save to GitHub to persist.`, true, false);
-  render();
-}
-
-searchBox.oninput=e=>{query=e.target.value;render()};connectBtn.onclick=connectGitHub;saveGitBtn.onclick=saveToGitHub;autoFetchBtn.onclick=handleAutoFetchGoodreads;saveFileBtn.onclick=downloadBooksJs;loadFileBtn.onclick=()=>fileInput.click();fileInput.onchange=e=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{try{let txt=reader.result.trim();if(txt.startsWith('window.LIBRARIEN_BOOKS')){txt=txt.replace(/^window\.LIBRARIEN_BOOKS\s*=\s*/,'').replace(/;\s*$/,'')}const data=JSON.parse(txt);if(!Array.isArray(data))throw new Error('Saved file must contain a book array');books=data;render();alert('Saved file loaded.')}catch(err){alert('Could not load that saved file.')}};reader.readAsText(file);e.target.value=''};recommendBtn.onclick=()=>{const term=moodBox.value.trim().toLowerCase();let pool=books.filter(b=>b.status==='unread');if(term){const matched=pool.filter(b=>[b.title,b.author,b.series,(b.tags||[]).join(' '),(b.goodreadsKeywords||[]).join(' '),b.notes,String(b.goodreadsRating||'')].join(' ').toLowerCase().includes(term));if(matched.length)pool=matched}const pick=pool[0];rec.classList.remove('hidden');rec.textContent=pick?`Try “${pick.title}”${pick.author?' by '+pick.author:''}. ${pick.goodreadsRating?'Goodreads rating: '+pick.goodreadsRating+'. ':''}This recommendation came only from your catalogue.`:'No unread books found.'};load();
+batchFetchBtn.onclick=batchFetchUnenriched;
+searchBox.oninput=e=>{query=e.target.value;render()};connectBtn.onclick=connectGitHub;saveGitBtn.onclick=saveToGitHub;saveFileBtn.onclick=downloadBooksJs;loadFileBtn.onclick=()=>fileInput.click();fileInput.onchange=e=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{try{let txt=reader.result.trim();if(txt.startsWith('window.LIBRARIEN_BOOKS')){txt=txt.replace(/^window\.LIBRARIEN_BOOKS\s*=\s*/,'').replace(/;\s*$/,'')}const data=JSON.parse(txt);if(!Array.isArray(data))throw new Error('Saved file must contain a book array');books=data;render();alert('Saved file loaded.')}catch(err){alert('Could not load that saved file.')}};reader.readAsText(file);e.target.value=''};recommendBtn.onclick=()=>{const term=moodBox.value.trim().toLowerCase();let pool=books.filter(b=>b.status==='unread');if(term){const matched=pool.filter(b=>[b.title,b.author,b.series,(b.tags||[]).join(' '),(b.goodreadsKeywords||[]).join(' '),b.notes,String(b.goodreadsRating||'')].join(' ').toLowerCase().includes(term));if(matched.length)pool=matched}const pick=pool[0];rec.classList.remove('hidden');rec.textContent=pick?`Try “${pick.title}”${pick.author?' by '+pick.author:''}. ${pick.goodreadsRating?'Goodreads rating: '+pick.goodreadsRating+'. ':''}This recommendation came only from your catalogue.`:'No unread books found.'};load();
 </script>
 </body>
 </html>
