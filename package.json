@@ -1,8 +1,1 @@
-{
-  "name": "librarian",
-  "version": "1.0.0",
-  "private": true,
-  "scripts": {
-    "start": "vercel dev"
-  }
-}
+{"name":"librarian","version":"1.1.0","private":true}

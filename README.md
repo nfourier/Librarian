@@ -1,45 +1,23 @@
-# Librarian Vercel Version
+# Librarian Goodreads Fields Version
 
-This version adds the backend step needed for GitHub OAuth saving.
+This version adds manual Goodreads fields for every book:
 
-## Why this version exists
+- Goodreads rating
+- Number of ratings/reviews
+- Goodreads URL
+- Goodreads keywords/shelves
+- Match confidence
+- Goodreads status
 
-GitHub Pages is static. The browser-only version cannot reliably exchange the OAuth code for a GitHub token. This version uses a Vercel Function at `/api/github-token` for that backend token step.
+## How to use
 
-## Files
+1. Open the app on Vercel.
+2. Search for a book.
+3. Click **Details**.
+4. Fill the Goodreads section.
+5. Click **Apply change**.
+6. Click **Save to GitHub**.
 
-- `index.html` - app frontend
-- `books.js` - embedded book catalogue
-- `config.js` - GitHub repository and OAuth Client ID
-- `api/github-token.js` - Vercel backend function
-- `package.json` - basic Vercel project file
+## Automatic Goodreads
 
-## Vercel setup
-
-1. Upload this package to the root of the GitHub repository.
-2. Create/import the repository in Vercel.
-3. In Vercel project settings, add environment variable:
-
-```text
-GITHUB_CLIENT_SECRET = your GitHub OAuth app Client Secret
-```
-
-4. Update the GitHub OAuth App callback URL to your Vercel app URL, for example:
-
-```text
-https://your-vercel-project.vercel.app/
-```
-
-5. Open the Vercel app URL.
-6. Click **Connect GitHub**.
-7. Approve GitHub.
-8. Click **Save to GitHub** after editing books.
-
-## Details labels
-
-- `CSV details` means the app has title/author/series/tags from the CSV.
-- `Needs Goodreads` means Goodreads rating, URL, and match confidence are not enriched yet.
-
-## Fallback
-
-If GitHub save fails, click **Save file** and manually upload the downloaded `books.js` to GitHub.
+Goodreads no longer issues new developer keys for its public API, so this version supports manual entry first. Automatic enrichment can be added later through a backend search/enrichment function.
