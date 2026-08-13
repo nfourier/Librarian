@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Librarian</title>
+<script src="config.js"></script>
+<script src="books.js"></script>
+<style>
+:root{--walnut:#24170f;--paper:#f4ead4;--paper2:#e5d6ba;--ink:#263247;--muted:#66718a;--gold:#c8a246;--red:#a33f32;--green:#58714d;--blue:#5069a8;--line:#d6c6a9}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top left,#4a3323,var(--walnut) 48%);color:var(--paper);font-family:system-ui,-apple-system,Segoe UI,sans-serif}button,input,select,textarea{font:inherit}.wrap{max-width:1220px;margin:0 auto;padding:22px 14px 72px}.hero{display:flex;justify-content:space-between;gap:20px;align-items:flex-end;border-bottom:2px solid var(--gold);padding-bottom:18px}.eyebrow{color:#d8b85a;text-transform:uppercase;letter-spacing:.08em;font-weight:800;font-size:13px}h1{font:700 clamp(38px,7vw,72px)/.92 Georgia,serif;margin:8px 0}.hero p{max-width:780px;color:var(--paper2);line-height:1.45;font-size:17px}.actions{display:flex;gap:10px;flex-wrap:wrap}button{border:1px solid var(--gold);background:transparent;color:var(--paper);border-radius:14px;padding:11px 14px;font-weight:800;cursor:pointer}button:hover{background:rgba(200,162,70,.14)}button.primary{background:var(--red);border-color:var(--red)}button.safe{background:var(--green);border-color:var(--green)}.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:18px 0}.stat,.panel,.search{background:rgba(244,234,212,.08);border:1px solid rgba(244,234,212,.16);border-radius:18px}.stat{padding:13px}.stat b{display:block;color:#fff4df;font-size:28px}.stat span{color:var(--paper2);font-size:13px}.layout{display:grid;grid-template-columns:1fr 380px;gap:18px}.search{display:flex;gap:10px;align-items:center;padding:12px}.search input,.panel input,.panel textarea,.panel select{width:100%;border:1px solid #6e5139;background:#3a291e;color:#fff5df;border-radius:14px;padding:12px;outline:none}.chips{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 16px}.chip{padding:8px 12px;border-radius:999px;font-size:14px}.chip.active{background:var(--gold);color:var(--walnut)}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}.card{background:var(--paper);color:var(--ink);border-radius:20px;box-shadow:0 4px 0 var(--paper2);padding:16px;min-height:245px;display:flex;flex-direction:column;gap:9px}.badges,.tags,.cardactions{display:flex;gap:7px;flex-wrap:wrap}.badge{border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:4px 8px;font-size:12px;font-weight:800}.badge.good{color:var(--green);border-color:var(--green)}.badge.warn{color:var(--red);border-color:var(--red)}.badge.blue{color:var(--blue);border-color:var(--blue)}.card h3{margin:3px 0 0;font:700 22px/1.08 Georgia,serif}.author{margin:0;color:var(--muted)}.blurb{color:#4a586f;font-size:14px;line-height:1.45;max-height:66px;overflow:hidden}.tags span{color:#4a586f;border:1px solid var(--line);border-radius:999px;padding:3px 8px}.cardactions{margin-top:auto}.cardactions button,.cardactions select{color:var(--ink);border:1px solid var(--line);background:transparent;border-radius:12px;padding:8px 9px}.cardactions .on{color:var(--red)}.panel{padding:16px;margin-bottom:14px}.panel h2{font:700 24px Georgia,serif;margin:0 0 8px}.panel p,.help{color:var(--paper2);line-height:1.45;font-size:14px}.notice{background:rgba(200,162,70,.14);border:1px solid rgba(200,162,70,.35);border-radius:14px;padding:12px;color:#fff4df;margin-top:10px;white-space:pre-wrap}.hidden{display:none}.modalbg{position:fixed;inset:0;background:rgba(0,0,0,.68);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}.modal{width:min(650px,100%);max-height:88vh;overflow:auto;background:var(--paper);color:var(--ink);border-radius:20px;padding:18px}.modal h2{font:700 30px Georgia,serif;margin:8px 0 2px}.modal button{color:var(--ink);border-color:var(--line)}.modal .primary{color:var(--paper);border-color:var(--red)}.modal textarea,.modal input,.modal select{background:#fff8e8;color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:10px;width:100%;margin:6px 0}.close{float:right;border:none;font-size:24px;padding:2px 8px}.empty{padding:35px;text-align:center;color:var(--paper2)}.warning{border-color:rgba(200,162,70,.55);background:rgba(200,162,70,.12)}.ok{color:#a7e0a4}.bad{color:#ffb8ad}@media(max-width:900px){.hero{align-items:flex-start;flex-direction:column}.layout{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero"><div><div class="eyebrow">Librarian</div><h1>Your private reading catalogue</h1><p>Your book list is included in the app. You can save manually as a file or connect GitHub and save directly to <b>books.js</b>.</p></div><div class="actions"><button id="connectBtn">Connect GitHub</button><button id="saveGitBtn" class="safe">Save to GitHub</button><button id="saveFileBtn">Save file</button><button id="loadFileBtn">Load file</button></div></header>
+<section class="stats"><div class="stat"><b id="stTotal">0</b><span>Total</span></div><div class="stat"><b id="stUnread">0</b><span>Unread</span></div><div class="stat"><b id="stReading">0</b><span>Reading</span></div><div class="stat"><b id="stNeeds">0</b><span>Need details</span></div><div class="stat"><b id="stSignals">0</b><span>Liked/Favorites</span></div></section>
+<main class="layout"><section><div class="search"><span>Search</span><input id="searchBox" placeholder="Title, author, series, tags..." /></div><div class="chips" id="chips"></div><div id="grid" class="grid"></div><div id="empty" class="empty hidden">No books match this view.</div></section><aside><div class="panel warning"><h2>GitHub save</h2><p>Click <b>Connect GitHub</b>, approve access, then click <b>Save to GitHub</b>. If GitHub authentication is blocked by the browser, use <b>Save file</b> and upload the downloaded books.js manually.</p><div id="githubStatus" class="notice">Not connected yet.</div></div><div class="panel"><h2>Librarian</h2><p>Recommends from your catalogue only.</p><input id="moodBox" placeholder="Mood or keyword, e.g. fantasy, mystery" /><button id="recommendBtn" class="primary" style="width:100%;justify-content:center;margin-top:8px">Recommend from my library</button><div id="rec" class="notice hidden"></div></div><div class="panel"><h2>Catalogue rule</h2><p>Every listed book is <b>In catalog</b>. If Goodreads/details are missing, it shows <b>Needs details</b>, never “not catalogued.”</p></div></aside></main>
+</div>
+<input type="file" id="fileInput" accept=".json,.js" class="hidden" />
+<div id="modalRoot"></div>
+<script>
+let books=[];let query='';let filter='All';let accessToken='';
+const sourceBooks = window.LIBRARIEN_BOOKS || [];
+const gh = window.LIBRARIEN_GITHUB || {};
+const filters=['All','Unread','Reading','Finished','Liked','Favorites','Needs details'];
+function clone(x){return JSON.parse(JSON.stringify(x))}
+function load(){books=clone(sourceBooks);render();handleOAuthCallback()}
+function esc(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function setStatus(msg, good=false, bad=false){githubStatus.className='notice '+(good?'ok':bad?'bad':'');githubStatus.textContent=msg}
+function match(b){const hay=[b.title,b.author,b.series,(b.tags||[]).join(' '),b.notes].join(' ').toLowerCase();const mq=!query||hay.includes(query.toLowerCase());const mf=filter==='All'||(filter==='Unread'&&b.status==='unread')||(filter==='Reading'&&b.status==='reading')||(filter==='Finished'&&b.status==='finished')||(filter==='Liked'&&b.liked)||(filter==='Favorites'&&b.favorite)||(filter==='Needs details'&&b.detailsStatus!=='complete');return mq&&mf}
+function render(){stTotal.textContent=books.length;stUnread.textContent=books.filter(b=>b.status==='unread').length;stReading.textContent=books.filter(b=>b.status==='reading').length;stNeeds.textContent=books.filter(b=>b.detailsStatus!=='complete').length;stSignals.textContent=books.filter(b=>b.liked||b.favorite).length;chips.innerHTML='';filters.forEach(f=>{const c=document.createElement('button');c.className='chip '+(filter===f?'active':'');c.textContent=f;c.onclick=()=>{filter=f;render()};chips.appendChild(c)});grid.innerHTML='';const list=books.filter(match);empty.classList.toggle('hidden',list.length>0);list.forEach(b=>{const el=document.createElement('article');el.className='card';el.innerHTML=`<div class="badges"><span class="badge good">In catalog</span><span class="badge ${b.detailsStatus==='complete'?'good':'warn'}">${b.detailsStatus==='complete'?'Details filled':'Needs details'}</span><span class="badge blue">${b.status}</span></div><h3>${esc(b.title)}</h3><p class="author">${esc(b.author||'Author unknown')}</p><p class="blurb">${esc(b.notes||'No notes or blurb yet.')}</p><div class="tags">${(b.tags||[]).slice(0,4).map(t=>`<span>${esc(t)}</span>`).join('')}</div><div class="cardactions"><button data-like class="${b.liked?'on':''}">${b.liked?'♥ Liked':'♡ Like'}</button><button data-fav class="${b.favorite?'on':''}">${b.favorite?'★ Favorite':'☆ Favorite'}</button><select data-status><option value="unread">Unread</option><option value="reading">Reading</option><option value="finished">Finished</option></select></div>`;el.querySelector('[data-status]').value=b.status;el.querySelector('[data-like]').onclick=e=>{e.stopPropagation();b.liked=!b.liked;render()};el.querySelector('[data-fav]').onclick=e=>{e.stopPropagation();b.favorite=!b.favorite;render()};el.querySelector('[data-status]').onchange=e=>{e.stopPropagation();b.status=e.target.value;render()};el.onclick=()=>openBook(b.id);grid.appendChild(el)})}
+function openBook(id){const b=books.find(x=>x.id===id);if(!b)return;modalRoot.innerHTML=`<div class="modalbg"><div class="modal"><button class="close" id="mbClose">×</button><div class="badges"><span class="badge good">In catalog</span><span class="badge ${b.detailsStatus==='complete'?'good':'warn'}">${b.detailsStatus==='complete'?'Details filled':'Needs details'}</span></div><h2>${esc(b.title)}</h2><p class="author">${esc(b.author||'Author unknown')}</p><label>Status</label><select id="mStatus"><option value="unread">Unread</option><option value="reading">Reading</option><option value="finished">Finished</option></select><label>Series</label><input id="mSeries" value="${esc(b.series||'')}"><label>Tags, comma separated</label><input id="mTags" value="${esc((b.tags||[]).join(', '))}"><label>Private notes or blurb</label><textarea id="mNotes" rows="7">${esc(b.notes||'')}</textarea><button id="mSave" class="primary">Apply change</button></div></div>`;mStatus.value=b.status;mbClose.onclick=()=>modalRoot.innerHTML='';modalRoot.querySelector('.modalbg').onclick=e=>{if(e.target.className==='modalbg')modalRoot.innerHTML=''};mSave.onclick=()=>{b.status=mStatus.value;b.series=mSeries.value.trim();b.tags=mTags.value.split(',').map(x=>x.trim()).filter(Boolean);b.notes=mNotes.value.trim();if(b.notes||b.tags.length)b.detailsStatus='complete';modalRoot.innerHTML='';render()}}
+function booksJs(){return 'window.LIBRARIEN_BOOKS = '+JSON.stringify(books,null,2)+';\n'}
+function downloadBooksJs(){const blob=new Blob([booksJs()],{type:'application/javascript'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='books.js';a.click();URL.revokeObjectURL(a.href)}
+function unicodeB64(str){return btoa(unescape(encodeURIComponent(str)))}
+async function sha256base64url(text){const data=new TextEncoder().encode(text);const hash=await crypto.subtle.digest('SHA-256',data);return btoa(String.fromCharCode(...new Uint8Array(hash))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+function randString(){const arr=new Uint8Array(32);crypto.getRandomValues(arr);return Array.from(arr,b=>('0'+b.toString(16)).slice(-2)).join('')}
+async function connectGitHub(){
+  if(!gh.clientId || !gh.owner || !gh.repo){setStatus('Missing GitHub setup. Check config.js.', false, true); return;}
+  const verifier=randString()+randString();
+  const challenge=await sha256base64url(verifier);
+  const redirect=location.origin+location.pathname;
+  const state=btoa(JSON.stringify({verifier, t:Date.now()}));
+  window.name=JSON.stringify({verifier});
+  const url=new URL('https://github.com/login/oauth/authorize');
+  url.searchParams.set('client_id', gh.clientId);
+  url.searchParams.set('redirect_uri', redirect);
+  url.searchParams.set('scope', gh.scope || 'repo');
+  url.searchParams.set('state', state);
+  url.searchParams.set('code_challenge', challenge);
+  url.searchParams.set('code_challenge_method', 'S256');
+  location.href=url.toString();
+}
+async function handleOAuthCallback(){
+  const params=new URLSearchParams(location.search);
+  const code=params.get('code');
+  if(!code) return;
+  history.replaceState({}, document.title, location.pathname);
+  try{
+    let saved={}; try{saved=JSON.parse(window.name||'{}')}catch(e){}
+    let verifier=saved.verifier;
+    if(!verifier && params.get('state')){try{verifier=JSON.parse(atob(params.get('state'))).verifier}catch(e){}}
+    if(!verifier) throw new Error('Missing OAuth verifier. Try Connect GitHub again.');
+    setStatus('GitHub returned approval. Exchanging code for access token...');
+    const res=await fetch('https://github.com/login/oauth/access_token', {method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({client_id:gh.clientId,code,redirect_uri:location.origin+location.pathname,code_verifier:verifier})});
+    const data=await res.json();
+    if(!data.access_token) throw new Error(data.error_description || data.error || 'No access token returned.');
+    accessToken=data.access_token;
+    setStatus('Connected to GitHub. You can now click Save to GitHub.', true, false);
+  }catch(err){setStatus('GitHub connection failed: '+err.message+'\nUse Save file as the fallback.', false, true)}
+}
+async function saveToGitHub(){
+  if(!accessToken){setStatus('Not connected. Click Connect GitHub first.'); return;}
+  if(!gh.owner || !gh.repo || !gh.path){setStatus('Missing GitHub setup in config.js.', false, true); return;}
+  try{
+    setStatus('Finding current books.js in GitHub...');
+    const api=`https://api.github.com/repos/${encodeURIComponent(gh.owner)}/${encodeURIComponent(gh.repo)}/contents/${encodeURIComponent(gh.path)}?ref=${encodeURIComponent(gh.branch||'main')}`;
+    const getRes=await fetch(api,{headers:{'Authorization':'Bearer '+accessToken,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'}});
+    if(!getRes.ok) throw new Error('Could not read existing file: '+getRes.status+' '+await getRes.text());
+    const current=await getRes.json();
+    setStatus('Saving updated books.js to GitHub...');
+    const putRes=await fetch(api,{method:'PUT',headers:{'Authorization':'Bearer '+accessToken,'Accept':'application/vnd.github+json','Content-Type':'application/json','X-GitHub-Api-Version':'2022-11-28'},body:JSON.stringify({message:'Update Librarian catalogue',content:unicodeB64(booksJs()),sha:current.sha,branch:gh.branch||'main'})});
+    if(!putRes.ok) throw new Error('Could not save file: '+putRes.status+' '+await putRes.text());
+    setStatus('Saved to GitHub. GitHub Pages may take a minute to refresh.', true, false);
+  }catch(err){setStatus('Save to GitHub failed: '+err.message+'\nUse Save file as the fallback.', false, true)}
+}
+searchBox.oninput=e=>{query=e.target.value;render()};
+connectBtn.onclick=connectGitHub;
+saveGitBtn.onclick=saveToGitHub;
+saveFileBtn.onclick=downloadBooksJs;
+loadFileBtn.onclick=()=>fileInput.click();
+fileInput.onchange=e=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{try{let txt=reader.result.trim();if(txt.startsWith('window.LIBRARIEN_BOOKS')){txt=txt.replace(/^window\.LIBRARIEN_BOOKS\s*=\s*/,'').replace(/;\s*$/,'')}const data=JSON.parse(txt);if(!Array.isArray(data))throw new Error('Saved file must contain a book array');books=data;render();alert('Saved file loaded.')}catch(err){alert('Could not load that saved file.')}};reader.readAsText(file);e.target.value=''};
+recommendBtn.onclick=()=>{const term=moodBox.value.trim().toLowerCase();let pool=books.filter(b=>b.status==='unread');if(term){const matched=pool.filter(b=>[b.title,b.author,b.series,(b.tags||[]).join(' '),b.notes].join(' ').toLowerCase().includes(term));if(matched.length)pool=matched}const pick=pool[0];rec.classList.remove('hidden');rec.textContent=pick?`Try “${pick.title}”${pick.author?' by '+pick.author:''}. This recommendation came only from your catalogue.`:'No unread books found.'};
+load();
+</script>
+</body>
+</html>

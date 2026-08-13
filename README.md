@@ -1,22 +1,47 @@
-# Librarien
+# Librarian
 
-Private reading catalogue web app project.
+A static reading catalogue app with optional GitHub save.
 
-## Current status
+## Files to upload to the repository root
 
-This repository is for the app code only. Do **not** commit personal catalogue exports, API keys, `.env` files, Dropbox paths, or private reading notes.
+Upload these files directly to the main/root level of the repository:
 
-## Prototype
+- `index.html`
+- `books.js`
+- `config.js`
+- `README.md`
+- `.nojekyll`
 
-Open `prototype/reading-catalog-prototype.html` in a browser to see the safe starter prototype.
+Do not upload the containing folder. The files must sit next to `.gitignore` on the main repository page.
 
-## Data rule
+## What works
 
-Imported CSV rows are always treated as **in the catalogue**. Missing Goodreads/blurb/cover data means **Needs details**, not "not catalogued".
+- Search and filter catalogue
+- Mark liked/favorite
+- Change unread/reading/finished
+- Edit notes, tags, and series
+- Save a replacement `books.js` file manually
+- Load a saved `books.js` or JSON backup
+- Optional GitHub save button
 
-## Next build direction
+## GitHub save setup
 
-- Frontend: React/Vite PWA
-- Backend: small API server
-- Database: hosted database such as Supabase
-- AI features: enrichment and Librarian recommendations through the backend only
+`config.js` is already configured for:
+
+```js
+owner: "nfourier"
+repo: "Librarian"
+clientId: "Ov23litRJBwJcm1ugyJ7"
+```
+
+If the OAuth app callback URL is:
+
+```text
+https://nfourier.github.io/Librarian/
+```
+
+then the Connect GitHub button should redirect to GitHub and return to the app.
+
+## Fallback
+
+If GitHub save fails, click **Save file**. The app downloads a fresh `books.js`. Upload that downloaded file to GitHub manually, replacing the old one.
