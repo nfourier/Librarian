@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Librarien Prototype</title>
+<style>
+  :root { --bg:#21160f; --panel:#f4ead4; --ink:#263247; --gold:#c6a03e; --red:#a64235; --green:#5b7552; --muted:#657086; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:linear-gradient(135deg,#21160f,#3a281b); color:var(--panel); font-family:system-ui,-apple-system,Segoe UI,sans-serif; }
+  .wrap { max-width:1100px; margin:auto; padding:22px 14px 70px; }
+  header { border-bottom:2px solid var(--gold); padding-bottom:16px; margin-bottom:18px; }
+  h1 { margin:0; font:700 clamp(34px,7vw,62px)/.95 Georgia,serif; }
+  .sub { color:#d6bd72; margin-top:6px; letter-spacing:.08em; text-transform:uppercase; font-size:13px; }
+  .bar, .stats, .layout { display:grid; gap:12px; }
+  .bar { grid-template-columns:1fr auto auto; }
+  .stats { grid-template-columns:repeat(4,1fr); margin-bottom:14px; }
+  .stat, .box { background:rgba(244,234,212,.08); border:1px solid rgba(244,234,212,.16); border-radius:16px; padding:14px; }
+  .stat b { display:block; font-size:26px; color:#fff3d8; }
+  .layout { grid-template-columns:1fr 330px; }
+  input, textarea { width:100%; border:1px solid #69503a; background:#3b2a1e; color:#fff3d8; padding:12px; border-radius:12px; font-size:15px; }
+  button { border:1px solid var(--gold); color:#fff3d8; background:transparent; border-radius:12px; padding:11px 14px; cursor:pointer; font-weight:700; }
+  button.primary { background:var(--red); border-color:var(--red); }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+  .chip.active { background:var(--gold); color:#21160f; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:14px; }
+  .card { background:var(--panel); color:var(--ink); border-radius:16px; padding:15px; min-height:170px; display:flex; flex-direction:column; gap:8px; }
+  .badges { display:flex; gap:6px; flex-wrap:wrap; }
+  .badge { font-size:12px; border:1px solid #d8c8a8; color:var(--muted); border-radius:999px; padding:3px 8px; }
+  .good { color:var(--green); border-color:var(--green); }
+  .warn { color:var(--red); border-color:var(--red); }
+  .title { font:700 19px/1.15 Georgia,serif; }
+  .author, .meta, .help { color:#dfd0b3; font-size:14px; }
+  .card .author, .card .meta { color:var(--muted); }
+  .actions { display:flex; gap:8px; margin-top:auto; }
+  .small { color:var(--ink); border-color:#d8c8a8; padding:7px 9px; }
+  @media(max-width:850px){ .layout,.bar{grid-template-columns:1fr;} .stats{grid-template-columns:repeat(2,1fr);} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>Librarien</h1><div class="sub">private reading catalogue prototype</div></header>
+  <section class="bar"><input id="search" placeholder="Search title, author, series, tags..." /><button>Import CSV</button><button class="primary" id="fill">Fill details</button></section>
+  <section class="stats"><div class="stat"><b id="total">0</b><span>Total books</span></div><div class="stat"><b id="unread">0</b><span>Unread</span></div><div class="stat"><b id="needs">0</b><span>Need details</span></div><div class="stat"><b id="liked">0</b><span>Liked/Favorites</span></div></section>
+  <div class="chips" id="chips"></div>
+  <main class="layout"><section><div class="grid" id="grid"></div></section><aside><div class="box"><h2>Librarian</h2><p class="help">This prototype recommends from your own catalogue only.</p><input id="mood" placeholder="Mood or keyword" /><button class="primary" id="recommend" style="width:100%;margin-top:8px;">Recommend</button><p id="result" class="help"></p></div><div class="box"><h2>Data rule</h2><p class="help">Imported CSV = In catalogue. Missing enrichment = Needs details.</p></div></aside></main>
+</div>
+<script>
+let books = [
+  {id:'1', title:'Example Imported Book', author:'Jane Author', status:'unread', detailsStatus:'complete', liked:false, favorite:true, tags:['fantasy','found family']},
+  {id:'2', title:'Needs Details Example', author:'Unknown Author', status:'unread', detailsStatus:'needs_details', liked:false, favorite:false, tags:['needs match']},
+  {id:'3', title:'Cozy Mystery Sample', author:'A. Writer', status:'reading', detailsStatus:'complete', liked:true, favorite:false, tags:['mystery','cozy']}
+];
+let filter='All', query='';
+const filters=['All','Unread','Reading','Finished','Liked','Favorites','Needs details'];
+function match(b){ const hay=[b.title,b.author,(b.tags||[]).join(' ')].join(' ').toLowerCase(); return (!query||hay.includes(query.toLowerCase())) && (filter==='All'||(filter==='Unread'&&b.status==='unread')||(filter==='Reading'&&b.status==='reading')||(filter==='Finished'&&b.status==='finished')||(filter==='Liked'&&b.liked)||(filter==='Favorites'&&b.favorite)||(filter==='Needs details'&&b.detailsStatus!=='complete')); }
+function render(){ total.textContent=books.length; unread.textContent=books.filter(b=>b.status==='unread').length; needs.textContent=books.filter(b=>b.detailsStatus!=='complete').length; liked.textContent=books.filter(b=>b.liked||b.favorite).length; chips.innerHTML=''; filters.forEach(f=>{ const btn=document.createElement('button'); btn.className='chip '+(filter===f?'active':''); btn.textContent=f; btn.onclick=()=>{filter=f; render();}; chips.appendChild(btn); }); grid.innerHTML=''; books.filter(match).forEach(b=>{ const el=document.createElement('article'); el.className='card'; el.innerHTML=`<div class="badges"><span class="badge good">In catalog</span><span class="badge ${b.detailsStatus==='complete'?'good':'warn'}">${b.detailsStatus==='complete'?'Details filled':'Needs details'}</span></div><div class="title">${b.title}</div><div class="card author">${b.author}</div><div class="meta">${(b.tags||[]).join(', ')}</div><div class="actions"><button class="small">${b.liked?'♥ Liked':'♡ Like'}</button><button class="small">${b.favorite?'★ Favorite':'☆ Favorite'}</button></div>`; grid.appendChild(el); }); }
+search.oninput=e=>{query=e.target.value; render();};
+fill.onclick=()=>alert('Safe placeholder: enrichment will be implemented in the backend, without changing catalogue status.');
+recommend.onclick=()=>{ const pool=books.filter(b=>b.status==='unread'); const pick=pool[Math.floor(Math.random()*pool.length)]; result.textContent=pick?`Try ${pick.title}. It is already in your catalogue.`:'No unread books found.'; };
+render();
+</script>
+</body>
+</html>
