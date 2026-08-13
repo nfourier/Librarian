@@ -2,38 +2,93 @@ import axios from 'axios';
 import * as cheerio from 'cheerio';
 
 /**
- * Fetches book blurb, average rating, and genres directly from Goodreads.
- * @param {string} bookUrl - Full Goodreads book URL
+ * Fetches book blurb, average rating, and genres directly from Goodreads
+ * using a CORS proxy for browser compatibility.
+ * 
+ * @param {string} bookInput - Full Goodreads URL or a search term / ISBN
+ * @returns {Promise<{title: string|null, blurb: string|null, rating: number|null, genres: string[]}>}
  */
-export async function fetchGoodreadsData(bookUrl) {
+export async function fetchGoodreadsData(bookInput) {
   try {
-    const { data: html } = await axios.get(bookUrl, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept-Language': 'en-US,en;q=0.9',
-      },
+    if (!bookInput) {
+      throw new Error('No book URL or query provided');
+    }
+
+    // 1. Build target Goodreads URL if only title/ISBN is passed
+    let targetUrl = bookInput.trim();
+    if (!targetUrl.startsWith('http')) {
+      targetUrl = `https://www.goodreads.com/search?q=${encodeURIComponent(targetUrl)}`;
+    }
+
+    // 2. Wrap request in CORS proxy to bypass browser security restrictions
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+
+    const response = await axios.get(proxyUrl, {
       timeout: 10000,
     });
 
+    const html = response.data;
     const $ = cheerio.load(html);
 
-    // 1. Extract Blurb & Rating from JSON-LD Metadata
+    // 3. Extract JSON-LD metadata (Blurb, Rating, Title)
     const jsonLdRaw = $('script[type="application/ld+json"]').html();
     let blurb = null;
     let rating = null;
+    let title = null;
 
     if (jsonLdRaw) {
       try {
         const jsonLd = JSON.parse(jsonLdRaw);
-        blurb = jsonLd.description ? jsonLd.description.replace(/<[^>]*>?/gm, '') : null;
-        rating = jsonLd.aggregateRating ? parseFloat(jsonLd.aggregateRating.ratingValue) : null;
+        title = jsonLd.name || null;
+        
+        // Strip HTML tags from description if present
+        if (jsonLd.description) {
+          blurb = jsonLd.description.replace(/<[^>]*>?/gm, '').trim();
+        }
+        if (jsonLd.aggregateRating && jsonLd.aggregateRating.ratingValue) {
+          rating = parseFloat(jsonLd.aggregateRating.ratingValue);
+        }
       } catch (e) {
-        console.warn('JSON-LD parse warning:', e.message);
+        console.warn('Could not parse JSON-LD block:', e.message);
       }
     }
 
-    // 2. Extract Genre Keywords
+    // Fallbacks if JSON-LD metadata is missing
+    if (!title) {
+      title = $('h1[data-testid="bookTitle"]').text().trim() || null;
+    }
+    if (!blurb) {
+      blurb = $('[data-testid="description"]').text().trim() || null;
+    }
+
+    // 4. Extract Genre Keywords
+    const genres = [];
+    $('[data-testid="genresList"] a.Button').each((_, el) => {
+      const genre = $(el).find('span.Button__labelItem').text().trim();
+      if (genre && !genres.includes(genre)) {
+        genres.push(genre);
+      }
+    });
+
+    return {
+      title,
+      blurb,
+      rating,
+      genres,
+    };
+  } catch (error) {
+    console.error('Error fetching Goodreads data:', error.message);
+    return {
+      title: null,
+      blurb: null,
+      rating: null,
+      genres: [],
+      error: error.message,
+    };
+  }
+}
+
+export default fetchGoodreadsData;
     const genres = [];
     $('[data-testid="genresList"] a.Button').each((_, el) => {
       const genre = $(el).find('span.Button__labelItem').text().trim();
