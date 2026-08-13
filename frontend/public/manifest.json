@@ -1,0 +1,10 @@
+{
+  "name": "Librarien",
+  "short_name": "Librarien",
+  "description": "A private reading catalogue and librarian assistant.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#24170f",
+  "theme_color": "#24170f",
+  "icons": []
+}
