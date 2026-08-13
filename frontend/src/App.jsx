@@ -1,85 +1,107 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { fetchGoodreadsData } from '../books.js';
 
 function App() {
-  const [urlInput, setUrlInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [book, setBook] = useState(null);
+  const [books, setBooks] = useState([
+    { id: 1, title: 'Clean Code', author: 'Robert C. Martin', blurb: null, rating: null, genres: [] },
+  ]);
 
-  const handleFetchBook = async () => {
-    if (!urlInput.trim()) return;
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState('');
 
-    setLoading(true);
-    const data = await fetchGoodreadsData(urlInput);
-    setBook(data);
-    setLoading(false);
+  const autoSyncMissingGoodreadsData = async () => {
+    setIsSyncing(true);
+    const incompleteBooks = books.filter(b => !b.blurb || !b.rating);
+
+    if (incompleteBooks.length === 0) {
+      setSyncStatus('All books are up to date!');
+      setIsSyncing(false);
+      return;
+    }
+
+    setSyncStatus(`Syncing ${incompleteBooks.length} book(s)...`);
+    const updatedBooks = [...books];
+
+    for (let i = 0; i < updatedBooks.length; i++) {
+      const book = updatedBooks[i];
+      if (!book.blurb || !book.rating) {
+        const searchQuery = `${book.title} ${book.author || ''}`;
+        setSyncStatus(`Fetching info for "${book.title}"...`);
+        const data = await fetchGoodreadsData(searchQuery);
+
+        if (data && !data.error) {
+          updatedBooks[i] = {
+            ...book,
+            blurb: book.blurb || data.blurb,
+            rating: book.rating || data.rating,
+            genres: (book.genres && book.genres.length > 0) ? book.genres : data.genres,
+          };
+        }
+      }
+    }
+
+    setBooks(updatedBooks);
+    setIsSyncing(false);
+    setSyncStatus('Auto-sync complete!');
   };
+
+  useEffect(() => {
+    autoSyncMissingGoodreadsData();
+  }, []);
 
   return (
     <div style={{ padding: '20px', fontFamily: 'sans-serif', maxWidth: '600px', margin: '0 auto' }}>
-      <h1>📚 Librarian</h1>
+      <h2>📚 Librarian Book Catalog</h2>
 
-      {/* Input Field & Button */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-        <input
-          type="text"
-          placeholder="Paste Goodreads URL or search title..."
-          value={urlInput}
-          onChange={(e) => setUrlInput(e.target.value)}
-          style={{ flex: 1, padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
-        />
+      <div style={{ marginBottom: '20px', padding: '12px', background: '#f0f4f8', borderRadius: '8px' }}>
         <button
-          onClick={handleFetchBook}
-          disabled={loading}
-          style={{ padding: '10px 16px', borderRadius: '6px', cursor: 'pointer' }}
+          onClick={autoSyncMissingGoodreadsData}
+          disabled={isSyncing}
+          style={{
+            padding: '10px 16px',
+            background: isSyncing ? '#ccc' : '#0070f3',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: '16px'
+          }}
         >
-          {loading ? 'Fetching...' : 'Get Book'}
+          {isSyncing ? 'Syncing...' : '🔄 Auto-Sync Missing Goodreads Data'}
         </button>
+        {syncStatus && <p style={{ fontSize: '14px', margin: '8px 0 0 0', color: '#555' }}>{syncStatus}</p>}
       </div>
 
-      {/* Display Book Details */}
-      {book && (
-        <div style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '16px', backgroundColor: '#f9f9f9' }}>
-          {book.title && <h2 style={{ marginTop: 0 }}>{book.title}</h2>}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {books.map((book) => (
+          <div key={book.id} style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '16px' }}>
+            <h3 style={{ margin: '0 0 4px 0' }}>{book.title}</h3>
+            {book.author && <p style={{ margin: '0 0 8px 0', color: '#666' }}>by {book.author}</p>}
 
-          {/* Star Rating */}
-          {book.rating && (
-            <p style={{ fontWeight: 'bold' }}>
-              Rating: ⭐ {book.rating} / 5
-            </p>
-          )}
+            {book.rating ? (
+              <p style={{ margin: '4px 0', fontWeight: 'bold' }}>Rating: ⭐ {book.rating} / 5</p>
+            ) : (
+              <p style={{ margin: '4px 0', color: '#888' }}>Rating: Missing</p>
+            )}
 
-          {/* Genre Tags */}
-          {book.genres && book.genres.length > 0 && (
-            <div style={{ margin: '12px 0' }}>
-              <span style={{ fontWeight: 'bold', marginRight: '6px' }}>Genres:</span>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
-                {book.genres.map((genre, index) => (
-                  <span
-                    key={index}
-                    style={{
-                      background: '#e0e0e0',
-                      padding: '4px 8px',
-                      borderRadius: '12px',
-                      fontSize: '0.85em',
-                    }}
-                  >
-                    {genre}
+            {book.genres && book.genres.length > 0 && (
+              <div style={{ display: 'flex', gap: '6px', margin: '8px 0', flexWrap: 'wrap' }}>
+                {book.genres.map((g, idx) => (
+                  <span key={idx} style={{ background: '#e2e8f0', padding: '2px 8px', borderRadius: '10px', fontSize: '12px' }}>
+                    {g}
                   </span>
                 ))}
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Book Blurb */}
-          {book.blurb && (
-            <div style={{ marginTop: '16px' }}>
-              <span style={{ fontWeight: 'bold' }}>Blurb:</span>
-              <p style={{ lineHeight: '1.5', color: '#444' }}>{book.blurb}</p>
-            </div>
-          )}
-        </div>
-      )}
+            {book.blurb ? (
+              <p style={{ fontSize: '14px', lineHeight: '1.4', color: '#333', marginTop: '8px' }}>{book.blurb}</p>
+            ) : (
+              <p style={{ fontSize: '13px', color: '#888', fontStyle: 'italic' }}>Blurb: Missing (will auto-fetch)</p>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
