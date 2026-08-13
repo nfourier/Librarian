@@ -1,89 +1,57 @@
-window.LIBRARIEN_BOOKS = [
-  {
-    "id": "book-140",
-    "title": "Solace",
-    "author": "Taylor McNiff",
-    "status": "unread",
-    "detailsStatus": "needs_details",
-    "liked": false,
-    "favorite": false,
-    "series": "",
-    "seriesIndex": "1.0",
-    "tags": [],
-    "notes": ""
-  },
-  {
-    "id": "book-142",
-    "title": "Safe Book One of the Veterans of Callenburg Series",
-    "author": "",
-    "status": "unread",
-    "detailsStatus": "needs_details",
-    "liked": false,
-    "favorite": false,
-    "series": "",
-    "seriesIndex": "1.0",
-    "tags": [],
-    "notes": ""
-  },
-  {
-    "id": "book-144",
-    "title": "Stay Book Two of the Veterans of Callenburg Series",
-    "author": "",
-    "status": "unread",
-    "detailsStatus": "needs_details",
-    "liked": false,
-    "favorite": false,
-    "series": "",
-    "seriesIndex": "1.0",
-    "tags": [],
-    "notes": ""
-  },
-  {
-    "id": "book-145",
-    "title": "Breakaway",
-    "author": "",
-    "status": "unread",
-    "detailsStatus": "needs_details",
-    "liked": false,
-    "favorite": false,
-    "series": "",
-    "seriesIndex": "1.0",
-    "tags": [],
-    "notes": ""
-  },
-  {
-    "id": "book-146",
-    "title": "Piece Us Together Monstrous Survivors Book 3",
-    "author": "TJ Hamel",
-    "status": "unread",
-    "detailsStatus": "needs_details",
-    "liked": false,
-    "favorite": false,
-    "series": "",
-    "seriesIndex": "1.0",
-    "tags": [],
-    "notes": ""
-  },
-  {
-    "id": "book-147",
-    "title": "Pieces of Us",
-    "author": "TJ Hamel",
-    "status": "unread",
-    "detailsStatus": "needs_details",
-    "liked": false,
-    "favorite": false,
-    "series": "",
-    "seriesIndex": "1.0",
-    "tags": [],
-    "notes": ""
-  },
-  {
-    "id": "book-148",
-    "title": "Drown in You",
-    "author": "TJ Hamel",
-    "status": "unread",
-    "detailsStatus": "needs_details",
-    "liked": false,
+import axios from 'axios';
+import * as cheerio from 'cheerio';
+
+/**
+ * Fetches book blurb, average rating, and genres directly from Goodreads.
+ * @param {string} bookUrl - Full Goodreads book URL
+ */
+export async function fetchGoodreadsData(bookUrl) {
+  try {
+    const { data: html } = await axios.get(bookUrl, {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
+      timeout: 10000,
+    });
+
+    const $ = cheerio.load(html);
+
+    // 1. Extract Blurb & Rating from JSON-LD Metadata
+    const jsonLdRaw = $('script[type="application/ld+json"]').html();
+    let blurb = null;
+    let rating = null;
+
+    if (jsonLdRaw) {
+      try {
+        const jsonLd = JSON.parse(jsonLdRaw);
+        blurb = jsonLd.description ? jsonLd.description.replace(/<[^>]*>?/gm, '') : null;
+        rating = jsonLd.aggregateRating ? parseFloat(jsonLd.aggregateRating.ratingValue) : null;
+      } catch (e) {
+        console.warn('JSON-LD parse warning:', e.message);
+      }
+    }
+
+    // 2. Extract Genre Keywords
+    const genres = [];
+    $('[data-testid="genresList"] a.Button').each((_, el) => {
+      const genre = $(el).find('span.Button__labelItem').text().trim();
+      if (genre && !genres.includes(genre)) {
+        genres.push(genre);
+      }
+    });
+
+    return {
+      blurb,
+      rating,
+      genres,
+    };
+  } catch (error) {
+    console.error('Goodreads fetch error:', error.message);
+    return null;
+  }
+}
     "favorite": false,
     "series": "",
     "seriesIndex": "1.0",
